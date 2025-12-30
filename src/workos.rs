@@ -1,6 +1,8 @@
+use std::sync::{Arc, Mutex};
+
 use url::{ParseError, Url};
 
-use crate::ApiKey;
+use crate::{ApiKey, RemoteJwkSet};
 use crate::directory_sync::DirectorySync;
 use crate::events::Events;
 use crate::mfa::Mfa;
@@ -19,6 +21,7 @@ pub struct WorkOs {
     key: ApiKey,
     client: reqwest::Client,
     client_id: Option<ClientId>,
+    jwks: Arc<Mutex<Option<RemoteJwkSet>>>,
 }
 
 impl WorkOs {
@@ -46,6 +49,10 @@ impl WorkOs {
 
     pub(crate) fn client_id(&self) -> Option<&ClientId> {
         self.client_id.as_ref()
+    }
+
+    pub(crate) fn jwks_cache(&self) -> &Arc<Mutex<Option<RemoteJwkSet>>> {
+        &self.jwks
     }
 
     /// Returns a [`DirectorySync`] instance.
@@ -146,6 +153,7 @@ impl<'a> WorkOsBuilder<'a> {
             key: self.key.to_owned(),
             client,
             client_id: self.client_id.cloned(),
+            jwks: Arc::new(Mutex::new(None)),
         }
     }
 }

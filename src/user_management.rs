@@ -44,7 +44,7 @@ impl<'a> UserManagement<'a> {
     pub fn new(workos: &'a WorkOs) -> Self {
         Self {
             workos,
-            jwks: Arc::new(Mutex::new(None)),
+            jwks: workos.jwks_cache().clone(),
         }
     }
 

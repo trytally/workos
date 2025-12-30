@@ -4,17 +4,21 @@ use thiserror::Error;
 
 use crate::events::{Event, EventName, Events};
 use crate::organizations::OrganizationId;
-use crate::{
-    PaginatedList, PaginationParams, ResponseExt, UrlEncodableVec, WorkOsError, WorkOsResult,
-};
+use crate::{PaginatedList, PaginationParams, ResponseExt, WorkOsError, WorkOsResult};
 
 /// Filter to only return events of particular types.
-#[derive(Debug, Serialize)]
-pub struct EventFilters(UrlEncodableVec<EventName>);
+#[derive(Clone, Debug, Serialize)]
+pub struct EventFilters(Vec<EventName>);
 
 impl From<Vec<EventName>> for EventFilters {
     fn from(event: Vec<EventName>) -> Self {
-        Self(event.into())
+        Self(event)
+    }
+}
+
+impl EventFilters {
+    fn is_empty(&self) -> bool {
+        self.0.is_empty()
     }
 }
 
@@ -26,7 +30,7 @@ pub struct ListEventsParams<'a> {
     pub pagination: PaginationParams<'a>,
 
     /// Filter to only return events of particular types.
-    #[serde(rename = "events[]")]
+    #[serde(rename = "events[]", skip_serializing_if = "EventFilters::is_empty")]
     pub events: EventFilters,
 
     /// Filter to only return events belonging only to specific Organizations
@@ -137,10 +141,9 @@ mod test {
             .mock("GET", "/events")
             .match_query(Matcher::AllOf(vec![
                 Matcher::UrlEncoded("order".to_string(), "desc".to_string()),
-                Matcher::UrlEncoded(
-                    "events[]".to_string(),
-                    "dsync.user.created,dsync.user.updated,dsync.user.deleted".to_string(),
-                ),
+                Matcher::UrlEncoded("events[]".to_string(), "dsync.user.created".to_string()),
+                Matcher::UrlEncoded("events[]".to_string(), "dsync.user.updated".to_string()),
+                Matcher::UrlEncoded("events[]".to_string(), "dsync.user.deleted".to_string()),
             ]))
             .match_header("Authorization", "Bearer sk_example_123456789")
             .with_status(200)

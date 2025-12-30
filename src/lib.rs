@@ -1,6 +1,7 @@
 //! Rust SDK for interacting with the [WorkOS](https://workos.com) API.
 
 #![warn(missing_docs)]
+#![allow(deprecated)]
 
 mod core;
 mod known_or_unknown;
